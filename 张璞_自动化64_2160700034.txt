@@ -1,0 +1,158 @@
+【源代码】
+Median_filter.m
+%自己编写的中值滤波程序
+[I,map]=imread('test1.pgm','pgm');
+figure(1);
+imshow(I,map);
+imwrite(I,'test1原始图像.bmp');
+title('test1.pgm原始图像');
+figure(2);
+n=3; 
+a=ones(n,n);
+p=size(I);   
+x1=double(I);
+x2=x1;
+for i=1:p(1)-n+1  
+    for j=1:p(2)-n+1   
+        c=x1(i:i+(n-1),j:j+(n-1));  
+        e=c(1,:);      
+        for u=2:n          
+            e=[e,c(u,:)];           
+        end
+        mm=median(e);    
+        x2(i+(n-1)/2,j+(n-1)/2)=mm;   
+    end
+end
+I2=uint8(x2);
+imshow(I2,map); 
+title('中值滤波后的test1.pgm（3x3）');
+ 
+%调用MATLAB中medfilt2函数进行中值滤波
+I1=medfilt2(I,[3 3]); 
+figure(3);
+imshow(I1,map);
+title('中值滤波平滑后的test1.pgm(3x3)(调用medfilt2函数）');
+
+
+Gauss_filter.m
+%编写的高斯滤波器
+n1=3;sigma1=1.5;
+n2=3;sigma2=1.5;
+theta=0;  
+[I,map]=imread('test1.pgm','pgm');     
+r=[cos(theta),-sin(theta);sin(theta),cos(theta)]; 
+for i=1:n2     
+    for j=1:n1       
+        u=r*[j-(n1+1)/2,i-(n2+1)/2]'; 
+        h(i,j)=exp(-u(1)^2/(2*sigma1^2))/(sigma1*sqrt(2*pi))*exp(-u(2)^2/(2 *sigma2^2))/(sigma2*sqrt(2*pi));           
+    end
+end
+h=h/sqrt(sum(sum(h.*h)));
+f1=conv2(double(I),double(h),'same'); 
+figure(1);  
+imshow(I);
+title('原图像——test1.pgm'); 
+colormap(gray);
+figure(2); 
+imshow(f1,map);
+title('高斯滤波平滑后的test1.pgm(3x3)'); 
+colormap(gray);
+ 
+%调用MATLAB中fspecial函数生成高斯滤波器
+h=fspecial('gaussian',[3 3],1);%建立一个3*3模板的高斯滤波器
+I1=imfilter(I,h,'conv');
+figure;
+imshow(I1,map);
+title('高斯滤波平滑后的test1.pgm(3x3)(调用fspecial函数)');
+
+Unsharp_masking.m
+IM=imread('test3_corrupt.pgm','pgm'); 
+I=IM;  
+IMSize=size(IM); 
+IM=cast(IM,'int32');  
+t=zeros(IMSize(1)+2,IMSize(2)+2); 
+t=cast(t,'int32');   
+t(2:IMSize(1)+1,2:IMSize(2)+1) = IM;
+t(:,1)=t(:,2); 
+t(:,IMSize(2)+2)=t(:,IMSize(2)+1);
+t(1,:)=t(2,:); 
+t(IMSize(1)+2,:)=t(IMSize(1)+1,:);
+A=1.0; 
+for i=2:1:IMSize(1)+1   
+    for j=2:1:IMSize(2)+1        IM(i-1,j-1)=t(i,j)*A-(t(i,j)*(-8)+t(i,j-1)+t(i-1,j-1)+t(i-1,j)+t(i,j+1)+t(i+1,j)+t(i+1,j+1)+t(i+1,j-1)+t(i-1,j+1));  
+    end
+end
+IM=cast(IM,'uint8');
+imwrite(IM,['UnsharpMasking_A_', num2str(10*A),'.png'],'png');
+figure;
+subplot(1,2,1) 
+imshow(I); 
+title('原图像——test3_corrupt.pgm');
+subplot(1,2,2)
+imshow(IM);
+title('反锐化掩膜后的test3_corrupt,pgm');
+
+Sobel edge detector.m
+%自己编写的sobel算子边缘检测
+I=imread('test3_corrupt.pgm','pgm'); 
+figure(1);
+subplot(1,2,1);
+imshow(I);
+title('原图像——test3_corrupt.pgm');
+[N,M]=size(I);
+I=double(I);
+h1=[-1,0,1;-2,0,2;-1,0,1];
+h2=[-1,-2,-1;0,0,0;1,2,1];
+Gx=conv2(I,h1,'same'); 
+Gy=conv2(I,h2,'same'); 
+F=abs(Gx)+abs(Gy); 
+for i=1:N    
+    for j=1:M    
+        I(i,j)=F(i,j); 
+    end
+end
+I=uint8(I);
+subplot(1,2,2);
+imshow(I); 
+title('Sobel 边缘检测——test3_corrupt.pgm');
+ 
+%调用MATLAB中edge函数
+figure(2);
+subplot(1,2,1);
+imshow(I);
+title('原图像——test3_corrupt.pgm');
+I1=edge(I,'sobel');
+subplot(1,2,2);
+imshow(I1);
+title('Canny边缘检测test3_corrupt.pgm');
+
+Laplacian_edge_detector.m
+I = imread('test4 copy.bmp','bmp'); 
+[N,M]=size(I); 
+figure; 
+subplot(1,2,1); 
+imshow(I);  
+title('原图像——test4 copy.bmp');
+t=ones(N,M); 
+t=I;  
+for i=2:N-1   
+    for j=2:M-1    
+        I(i,j)=t(i+1,j)+t(i-1,j)+t(i,j+1)+t(i,j-1)-4*t(i,j);  
+    end
+end
+subplot(1,2,2); 
+imshow(I); 
+title('Laplacian边缘检测test4 copy.bmp');
+
+
+Canny_algorithm_matlab.m
+I=imread('test3_corrupt.pgm');
+subplot(1,2,1);
+imshow(I);
+title('原图像——test3_corrupt.pgm');
+I1=edge(I,'canny');
+subplot(1,2,2);
+imshow(I1);
+title('Canny边缘检测test3_corrupt.pgm');
+
+
